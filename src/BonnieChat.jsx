@@ -1,4 +1,4 @@
-// 💬 BonnieChat.jsx
+// 💬 BonnieChat.jsx — Updated
 import React, { useEffect, useRef, useState } from 'react';
 
 const AIRTABLE_ENDPOINT = 'https://api.airtable.com/v0/appxKl5q1IUiIiMu7/bonnie_logs';
@@ -33,52 +33,26 @@ export default function BonnieChat() {
   const [typing, setTyping] = useState(false);
   const [online, setOnline] = useState(false);
   const [pendingMessage, setPendingMessage] = useState(null);
-  const [hasFiredIdleMessage, setHasFiredIdleMessage] = useState(false);
-  const [presets, setPresets] = useState([
-    'Do you miss me?',
-    'What are you wearing?',
-    'What’s your biggest fantasy?'
-  ]);
   const endRef = useRef(null);
-  const idleTimerRef = useRef(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setOnline(true);
-    }, Math.random() * 15000 + 5000); // 5–20s delay
-
+    const timer = setTimeout(() => setOnline(true), Math.random() * 15000 + 5000);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    if (online) {
-      if (pendingMessage) {
-        const delay = Math.random() * 3000 + 2000; // 2–5s
-        setTimeout(() => {
-          simulateBonnieTyping(pendingMessage.text, pendingMessage.isGPT);
-          setPendingMessage(null);
-        }, delay);
-      }
-
-      idleTimerRef.current = setTimeout(() => {
-        if (messages.length === 0 && !hasFiredIdleMessage) {
-          const idleFlirty = [
-            "Still deciding what to say? 😘",
-            "Don’t leave me hanging…",
-            "You can talk to me, you know 💋",
-            "Don’t make me beg for your attention 😉"
-          ];
-          const idleDelay = Math.random() * 3000 + 2000;
-          setTimeout(() => {
-            simulateBonnieTyping(idleFlirty[Math.floor(Math.random() * idleFlirty.length)]);
-            setHasFiredIdleMessage(true);
-          }, idleDelay);
-        }
-      }, 30000);
+    if (online && messages.length === 0) {
+      simulateBonnieTyping("Bonnie might be away right now, but she always replies… 💋");
     }
 
-    return () => clearTimeout(idleTimerRef.current);
-  }, [online, pendingMessage]);
+    if (online && pendingMessage) {
+      const delay = Math.random() * 3000 + 2000;
+      setTimeout(() => {
+        simulateBonnieTyping(pendingMessage.text, pendingMessage.isGPT);
+        setPendingMessage(null);
+      }, delay);
+    }
+  }, [online]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -94,25 +68,6 @@ export default function BonnieChat() {
     setInput('');
     setBusy(true);
     await addMessage(text, 'user');
-
-    if (presets.includes(text)) {
-      setPresets(p => p.filter(q => q !== text));
-      const scripted = {
-        'Do you miss me?': 'Always… you’re my favorite part of the day 🥰',
-        'What are you wearing?': 'Something soft... wish you were here 😘',
-        'What’s your biggest fantasy?': 'Maybe I’ll tell you if you behave… 🔥'
-      }[text];
-
-      if (scripted) {
-        if (online) {
-          const delay = Math.random() * 3000 + 2000;
-          setTimeout(() => simulateBonnieTyping(scripted), delay);
-        } else {
-          setPendingMessage({ text: scripted, isGPT: false });
-        }
-        return;
-      }
-    }
 
     try {
       const res = await fetch(CHAT_API_ENDPOINT, {
@@ -135,7 +90,6 @@ export default function BonnieChat() {
 
   function simulateBonnieTyping(reply, isGPT = false) {
     if (!online) return;
-
     setTyping(true);
     const length = reply.length || 0;
     const charsPerSecond = 5 + Math.random() * 3;
@@ -171,16 +125,6 @@ export default function BonnieChat() {
           ) : '💤 Offline'}
         </div>
       </div>
-
-      {presets.length > 0 && (
-        <div style={styles.presetContainer}>
-          {presets.map(q => (
-            <button key={q} style={styles.presetBtn} onClick={() => send(q)}>
-              {q}
-            </button>
-          ))}
-        </div>
-      )}
 
       <div style={styles.chatBox}>
         {messages.map((m, i) => (
@@ -229,13 +173,6 @@ const styles = {
   avatar: { width: 56, height: 56, borderRadius: 28, marginRight: 12, border: '2px solid #e91e63' },
   name: { color: '#e91e63', fontSize: 20, fontWeight: 600 },
   sub: { color: '#555', fontSize: 14 },
-  presetContainer: {
-    display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12
-  },
-  presetBtn: {
-    flex: '1 1 45%', background: '#fde0ec', border: 'none',
-    borderRadius: 20, padding: '8px 12px', fontSize: 14, color: '#880e4f', cursor: 'pointer'
-  },
   chatBox: {
     background: '#fff', borderRadius: 12, padding: 12, height: 400,
     overflowY: 'auto', boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
