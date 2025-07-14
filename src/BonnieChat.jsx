@@ -1,4 +1,4 @@
-// 💬 BonnieChat.jsx — With Offline Notice
+// 💬 BonnieChat.jsx — No Intro Message
 import React, { useEffect, useRef, useState } from 'react';
 
 const AIRTABLE_ENDPOINT = 'https://api.airtable.com/v0/appxKl5q1IUiIiMu7/bonnie_logs';
@@ -41,11 +41,6 @@ export default function BonnieChat() {
   }, []);
 
   useEffect(() => {
-    if (online && messages.length === 0) {
-      const welcome = "Bonnie might be away right now, but she always replies… 💋";
-      setTimeout(() => simulateBonnieTyping(welcome), 1000);
-    }
-
     if (online && pendingMessage) {
       const delay = Math.random() * 3000 + 2000;
       setTimeout(() => {
@@ -53,7 +48,7 @@ export default function BonnieChat() {
         setPendingMessage(null);
       }, delay);
     }
-  }, [online, messages, pendingMessage]);
+  }, [online, pendingMessage]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
