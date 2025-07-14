@@ -1,4 +1,4 @@
-// 💬 BonnieChat.jsx — Updated
+// 💬 BonnieChat.jsx — With Offline Notice
 import React, { useEffect, useRef, useState } from 'react';
 
 const AIRTABLE_ENDPOINT = 'https://api.airtable.com/v0/appxKl5q1IUiIiMu7/bonnie_logs';
@@ -42,7 +42,8 @@ export default function BonnieChat() {
 
   useEffect(() => {
     if (online && messages.length === 0) {
-      simulateBonnieTyping("Bonnie might be away right now, but she always replies… 💋");
+      const welcome = "Bonnie might be away right now, but she always replies… 💋";
+      setTimeout(() => simulateBonnieTyping(welcome), 1000);
     }
 
     if (online && pendingMessage) {
@@ -52,7 +53,7 @@ export default function BonnieChat() {
         setPendingMessage(null);
       }, delay);
     }
-  }, [online]);
+  }, [online, messages, pendingMessage]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -108,6 +109,11 @@ export default function BonnieChat() {
         <div>
           <div style={styles.name}>Bonnie Blue</div>
           <div style={styles.sub}>Flirty. Fun. Dangerously charming.</div>
+          {!online && (
+            <div style={styles.notice}>
+              Bonnie may be offline right now, but she can still read your messages…
+            </div>
+          )}
         </div>
         <div style={{
           marginLeft: 'auto',
@@ -173,6 +179,12 @@ const styles = {
   avatar: { width: 56, height: 56, borderRadius: 28, marginRight: 12, border: '2px solid #e91e63' },
   name: { color: '#e91e63', fontSize: 20, fontWeight: 600 },
   sub: { color: '#555', fontSize: 14 },
+  notice: {
+    fontSize: 13,
+    color: '#999',
+    marginTop: 4,
+    fontStyle: 'italic'
+  },
   chatBox: {
     background: '#fff', borderRadius: 12, padding: 12, height: 400,
     overflowY: 'auto', boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
