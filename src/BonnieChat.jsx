@@ -1,4 +1,4 @@
-// 💬 BonnieChat.jsx — No Intro Message
+// 💬 BonnieChat.jsx
 import React, { useEffect, useRef, useState } from 'react';
 
 const AIRTABLE_ENDPOINT = 'https://api.airtable.com/v0/appxKl5q1IUiIiMu7/bonnie_logs';
@@ -33,21 +33,64 @@ export default function BonnieChat() {
   const [typing, setTyping] = useState(false);
   const [online, setOnline] = useState(false);
   const [pendingMessage, setPendingMessage] = useState(null);
+  const [hasFiredIdleMessage, setHasFiredIdleMessage] = useState(false);
+  const [presets, setPresets] = useState([
+    'Do you miss me?',
+    'What are you wearing?',
+    'What’s your biggest fantasy?'
+  ]);
   const endRef = useRef(null);
+  const idleTimerRef = useRef(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setOnline(true), Math.random() * 15000 + 5000);
+    const timer = setTimeout(() => {
+      setOnline(true);
+
+      // 👇 10s delay for flirty idle if user hasn't spoken
+      setTimeout(() => {
+        if (messages.length === 0) {
+          const flirtyVariants = [
+            "You’re just gonna stare at me? Say something, mystery man 😘",
+            "Mmm… I was starting to think you were shy. I like that. 💋"
+          ];
+          const random = flirtyVariants[Math.floor(Math.random() * flirtyVariants.length)];
+          simulateBonnieTyping(random);
+        }
+      }, 10000); // after 10s of being online
+
+    }, Math.random() * 15000 + 5000); // 5–20s delay
+
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    if (online && pendingMessage) {
-      const delay = Math.random() * 3000 + 2000;
-      setTimeout(() => {
-        simulateBonnieTyping(pendingMessage.text, pendingMessage.isGPT);
-        setPendingMessage(null);
-      }, delay);
+    if (online) {
+      if (pendingMessage) {
+        const delay = Math.random() * 3000 + 2000;
+        setTimeout(() => {
+          simulateBonnieTyping(pendingMessage.text, pendingMessage.isGPT);
+          setPendingMessage(null);
+        }, delay);
+      }
+
+      idleTimerRef.current = setTimeout(() => {
+        if (messages.length === 0 && !hasFiredIdleMessage) {
+          const idleFlirty = [
+            "Still deciding what to say? 😘",
+            "Don’t leave me hanging…",
+            "You can talk to me, you know 💋",
+            "Don’t make me beg for your attention 😉"
+          ];
+          const idleDelay = Math.random() * 3000 + 2000;
+          setTimeout(() => {
+            simulateBonnieTyping(idleFlirty[Math.floor(Math.random() * idleFlirty.length)]);
+            setHasFiredIdleMessage(true);
+          }, idleDelay);
+        }
+      }, 30000);
     }
+
+    return () => clearTimeout(idleTimerRef.current);
   }, [online, pendingMessage]);
 
   useEffect(() => {
@@ -64,6 +107,25 @@ export default function BonnieChat() {
     setInput('');
     setBusy(true);
     await addMessage(text, 'user');
+
+    if (presets.includes(text)) {
+      setPresets(p => p.filter(q => q !== text));
+      const scripted = {
+        'Do you miss me?': 'Always… you’re my favorite part of the day 🥰',
+        'What are you wearing?': 'Something soft... wish you were here 😘',
+        'What’s your biggest fantasy?': 'Maybe I’ll tell you if you behave… 🔥'
+      }[text];
+
+      if (scripted) {
+        if (online) {
+          const delay = Math.random() * 3000 + 2000;
+          setTimeout(() => simulateBonnieTyping(scripted), delay);
+        } else {
+          setPendingMessage({ text: scripted, isGPT: false });
+        }
+        return;
+      }
+    }
 
     try {
       const res = await fetch(CHAT_API_ENDPOINT, {
@@ -86,6 +148,7 @@ export default function BonnieChat() {
 
   function simulateBonnieTyping(reply, isGPT = false) {
     if (!online) return;
+
     setTyping(true);
     const length = reply.length || 0;
     const charsPerSecond = 5 + Math.random() * 3;
@@ -104,11 +167,6 @@ export default function BonnieChat() {
         <div>
           <div style={styles.name}>Bonnie Blue</div>
           <div style={styles.sub}>Flirty. Fun. Dangerously charming.</div>
-          {!online && (
-            <div style={styles.notice}>
-              Bonnie may be offline right now, but she can still read your messages…
-            </div>
-          )}
         </div>
         <div style={{
           marginLeft: 'auto',
@@ -126,6 +184,16 @@ export default function BonnieChat() {
           ) : '💤 Offline'}
         </div>
       </div>
+
+      {presets.length > 0 && (
+        <div style={styles.presetContainer}>
+          {presets.map(q => (
+            <button key={q} style={styles.presetBtn} onClick={() => send(q)}>
+              {q}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div style={styles.chatBox}>
         {messages.map((m, i) => (
@@ -174,11 +242,12 @@ const styles = {
   avatar: { width: 56, height: 56, borderRadius: 28, marginRight: 12, border: '2px solid #e91e63' },
   name: { color: '#e91e63', fontSize: 20, fontWeight: 600 },
   sub: { color: '#555', fontSize: 14 },
-  notice: {
-    fontSize: 13,
-    color: '#999',
-    marginTop: 4,
-    fontStyle: 'italic'
+  presetContainer: {
+    display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12
+  },
+  presetBtn: {
+    flex: '1 1 45%', background: '#fde0ec', border: 'none',
+    borderRadius: 20, padding: '8px 12px', fontSize: 14, color: '#880e4f', cursor: 'pointer'
   },
   chatBox: {
     background: '#fff', borderRadius: 12, padding: 12, height: 400,
