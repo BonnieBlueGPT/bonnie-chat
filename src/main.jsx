@@ -1,16 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import BonnieChat from './BonnieChat.jsx';
-import Dashboard from './BonnieDashboard.jsx';
+import BonnieDashboard from './BonnieDashboard.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <Router>
+    <BrowserRouter>
       <Routes>
         <Route path="/" element={<BonnieChat />} />
-        <Route path="/secret123" element={<Dashboard />} />
+        <Route path="/secret123" element={<BonnieDashboard />} />
       </Routes>
-    </Router>
+    </BrowserRouter>
   </React.StrictMode>
 );
