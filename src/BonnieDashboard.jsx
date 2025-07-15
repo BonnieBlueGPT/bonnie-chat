@@ -1,120 +1,103 @@
-import React, { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import React, { useEffect, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
-  "https://iplbsbhaiyyugutmddpr.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwbGJzYmhhaXl5dWd1bWRkcHIiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc1MjIyNDQxNiwiZXhwIjoyMDY3ODAwNDE2fQ.ezDIsmf12mxj6dTNi5WOXUSFtwsxDsy0rmaVjKuuB34"
+  'https://iplbsbhaiyyugutmddpr.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwbGJzYmhhaXl5dWd1dG1kZHByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIyMjQ0MTYsImV4cCI6MjA2NzgwMDQxNn0.ezDIsmf12mxj6dTNi5WOXUSFtwsxDsy0rmaVjKuuB34'
 );
 
-const Dashboard = () => {
-  const [auth, setAuth] = useState(false);
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [messages, setMessages] = useState([]);
-  const [uniqueUsers, setUniqueUsers] = useState(0);
+const BonnieDashboard = () => {
+  const [isOnline, setIsOnline] = useState(true);
+  const [activeSessions, setActiveSessions] = useState(0);
+  const [todayUsers, setTodayUsers] = useState(0);
+  const [todayMessages, setTodayMessages] = useState(0);
+  const [currentChatDuration, setCurrentChatDuration] = useState(null);
 
   useEffect(() => {
-    if (auth) {
-      fetchMessages();
-    }
-  }, [auth]);
+    const fetchData = async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-  const fetchMessages = async () => {
-    const { data, error } = await supabase
-      .from("bonnie_memory")
-      .select("*")
-      .order("timestamp", { ascending: false });
+      const { data, error } = await supabase
+        .from('bonnie_memory')
+        .select('*')
+        .gte('created_at', today.toISOString());
 
-    if (data) {
-      setMessages(data);
-      const users = new Set(data.map((msg) => msg.session_id));
-      setUniqueUsers(users.size);
-    }
-    setLoading(false);
-  };
+      if (error) {
+        console.error('Error fetching data:', error);
+        return;
+      }
 
-  const handleAuth = () => {
-    if (password === "secret123") {
-      setAuth(true);
-    }
-  };
+      const sessions = new Map();
+      let messages = 0;
+      let activeCount = 0;
+      let latestSessionTime = null;
 
-  if (!auth) {
-    return (
-      <div style={styles.authBox}>
-        <h2>Enter Password</h2>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={styles.input}
-        />
-        <button onClick={handleAuth} style={styles.btn}>
-          Access Dashboard
-        </button>
-      </div>
-    );
-  }
+      data.forEach(entry => {
+        sessions.set(entry.session_id, true);
+        messages++;
+        if (entry.created_at) {
+          const msgTime = new Date(entry.created_at).getTime();
+          if (!latestSessionTime || msgTime > latestSessionTime) {
+            latestSessionTime = msgTime;
+          }
+        }
+      });
+
+      const sessionArray = [...sessions.keys()];
+      setTodayUsers(sessionArray.length);
+      setTodayMessages(messages);
+      setActiveSessions(sessionArray.length > 0 ? 1 : 0);
+
+      if (latestSessionTime) {
+        const durationMs = Date.now() - latestSessionTime;
+        const durationMin = Math.floor(durationMs / 60000);
+        setCurrentChatDuration(`${durationMin} minute${durationMin !== 1 ? 's' : ''} long`);
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div style={styles.container}>
-      <h1>Bonnie Activity Dashboard</h1>
-      <p><strong>Total Messages:</strong> {messages.length}</p>
-      <p><strong>Unique Users:</strong> {uniqueUsers}</p>
-      <div style={styles.list}>
-        {messages.slice(0, 20).map((msg) => (
-          <div key={msg.id} style={styles.card}>
-            <strong>{msg.sender}</strong>: {msg.message}
-            <br />
-            <small>{new Date(msg.timestamp).toLocaleString()}</small>
-          </div>
-        ))}
+    <div className="min-h-screen bg-black text-white p-4 flex flex-col items-center font-sans">
+      <h1 className="text-3xl font-bold mb-6">Bonnie Activity</h1>
+
+      <div className="w-full max-w-sm bg-zinc-900 rounded-2xl p-4 mb-4 shadow-lg">
+        <div className="flex items-center space-x-2 text-lg">
+          <span className="text-green-500">●</span>
+          <span>Bonnie is {isOnline ? 'online' : 'offline'}</span>
+        </div>
+      </div>
+
+      <div className="w-full max-w-sm bg-zinc-900 rounded-2xl p-4 mb-4 shadow-lg">
+        <div className="flex items-center space-x-2 text-lg">
+          <span className="text-white">💬</span>
+          <span>{activeSessions > 0 ? `${activeSessions} active session now` : 'No one talking to Bonnie'}</span>
+        </div>
+      </div>
+
+      <div className="w-full max-w-sm grid grid-cols-2 gap-4 mb-4">
+        <div className="bg-zinc-900 rounded-2xl p-4 shadow-lg text-center">
+          <div className="text-sm text-zinc-400">People talked to Bonnie today</div>
+          <div className="text-2xl font-bold">{todayUsers}</div>
+        </div>
+        <div className="bg-zinc-900 rounded-2xl p-4 shadow-lg text-center">
+          <div className="text-sm text-zinc-400">Messages sent</div>
+          <div className="text-2xl font-bold">{todayMessages}</div>
+        </div>
+      </div>
+
+      <div className="w-full max-w-sm bg-zinc-900 rounded-2xl p-4 shadow-lg">
+        <div className="flex items-center space-x-2 text-lg">
+          <span className="text-white">⏱️</span>
+          <span>Current chat: {currentChatDuration || 'Not active'}</span>
+        </div>
       </div>
     </div>
   );
 };
 
-const styles = {
-  authBox: {
-    padding: "2rem",
-    textAlign: "center",
-    maxWidth: "400px",
-    margin: "100px auto",
-    background: "#222",
-    color: "#fff",
-    borderRadius: "12px",
-  },
-  input: {
-    padding: "0.6rem",
-    width: "100%",
-    marginTop: "1rem",
-    marginBottom: "1rem",
-    borderRadius: "8px",
-    border: "none",
-  },
-  btn: {
-    padding: "0.6rem 1rem",
-    background: "#e91e63",
-    color: "#fff",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-  },
-  container: {
-    padding: "2rem",
-    fontFamily: "Segoe UI, sans-serif",
-    maxWidth: "960px",
-    margin: "0 auto",
-  },
-  list: {
-    marginTop: "2rem",
-  },
-  card: {
-    background: "#f9f9f9",
-    padding: "1rem",
-    marginBottom: "1rem",
-    borderRadius: "8px",
-  },
-};
-
-export default Dashboard;
+export default BonnieDashboard;
