@@ -1,8 +1,6 @@
-// 💬 BonnieChat.jsx — Slut Mode v1.2.2: Debugging + First-Time Tease Fix
+// 💬 BonnieChat.jsx — Supabase Fix v1.2.3: Remove Airtable Logging
 import React, { useEffect, useRef, useState } from 'react';
 
-const AIRTABLE_ENDPOINT = 'https://api.airtable.com/v0/appxKl5q1IUiIiMu7/bonnie_logs';
-const AIRTABLE_KEY = 'patXXLidHvUoNlM3F';
 const CHAT_API_ENDPOINT = 'https://bonnie-backend-server.onrender.com/bonnie-chat';
 const session_id = (() => {
   let id = localStorage.getItem('bonnie_session');
@@ -12,19 +10,6 @@ const session_id = (() => {
   }
   return id;
 })();
-
-async function logToAirtable(sender, message) {
-  fetch(AIRTABLE_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${AIRTABLE_KEY}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      fields: { session_id, sender, message, timestamp: new Date().toISOString() }
-    })
-  }).catch(console.error);
-}
 
 export default function BonnieChat() {
   const [messages, setMessages] = useState([]);
@@ -51,7 +36,6 @@ export default function BonnieChat() {
       console.log("🆕 First-time user detected — showing tease");
       simulateBonnieTyping("Hold on… Bonnie’s just slipping into something more comfortable 😘");
       localStorage.setItem('bonnie_first_time', 'true');
-      console.log("👗 Tease triggered");
     } else {
       console.log("🔁 Returning user — skipping tease");
     }
@@ -61,7 +45,6 @@ export default function BonnieChat() {
       console.log("✅ Bonnie is now online");
       if (messages.length === 0) {
         const opener = randomFlirtyOpeners[Math.floor(Math.random() * randomFlirtyOpeners.length)];
-        console.log("💋 Random opener:", opener);
         simulateBonnieTyping(opener);
       }
     }, Math.random() * 15000 + 5000);
@@ -101,16 +84,15 @@ export default function BonnieChat() {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, typing]);
 
-  async function addMessage(text, sender) {
+  function addMessage(text, sender) {
     setMessages(m => [...m, { sender, text }]);
-    await logToAirtable(sender, text);
   }
 
   async function send(text) {
     if (!text || busy) return;
     setInput('');
     setBusy(true);
-    await addMessage(text, 'user');
+    addMessage(text, 'user');
 
     try {
       const res = await fetch(CHAT_API_ENDPOINT, {
@@ -152,7 +134,7 @@ export default function BonnieChat() {
         const text = messages[index];
         await new Promise(resolve => setTimeout(resolve, delay));
         setTyping(false);
-        await addMessage(text, 'bonnie');
+        addMessage(text, 'bonnie');
         delay = Math.random() * 2000 + 2000;
         setTimeout(() => playSequence(index + 1), delay);
       })();
@@ -161,22 +143,22 @@ export default function BonnieChat() {
 
     setTyping(true);
     const duration = Math.min(10000, Math.max(2000, (reply.length / (5 + Math.random() * 3)) * 1000));
-    setTimeout(async () => {
+    setTimeout(() => {
       setTyping(false);
-      await addMessage(reply, 'bonnie');
+      addMessage(reply, 'bonnie');
       setBusy(false);
     }, duration);
   }
 
   return (
     <div style={styles.container}>
-      {/* UI rendering — unchanged */}
+      {/* Insert your existing UI layout (unchanged) */}
     </div>
   );
 }
 
 const styles = {
-  // your existing styles unchanged
+  container: { fontFamily: 'Segoe UI, sans-serif', maxWidth: 480, margin: 'auto', padding: 16 }
 };
 
 const style = document.createElement('style');
