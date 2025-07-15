@@ -1,12 +1,9 @@
-// 💬 BonnieChat.jsx
+// 💬 BonnieChat.jsx — Slut Mode v1.0 Enhanced
 import React, { useEffect, useRef, useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  'https://iplbsbhaiyyugutmddpr.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwbGJzYmhhaXl5dWd1bWRkcHIiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc1MjIyNDQxNiwiZXhwIjoyMDY3ODAwNDE2fQ.ezDIsmf12mxj6dTNi5WOXUSFtwsxDsy0rmaVjKuuB34'
-);
-
+const AIRTABLE_ENDPOINT = 'https://api.airtable.com/v0/appxKl5q1IUiIiMu7/bonnie_logs';
+const AIRTABLE_KEY = 'patXXLidHvUoNlM3F';
+const CHAT_API_ENDPOINT = 'https://bonnie-backend-server.onrender.com/bonnie-chat';
 const session_id = (() => {
   let id = localStorage.getItem('bonnie_session');
   if (!id) {
@@ -16,6 +13,19 @@ const session_id = (() => {
   return id;
 })();
 
+async function logToAirtable(sender, message) {
+  fetch(AIRTABLE_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${AIRTABLE_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      fields: { session_id, sender, message, timestamp: new Date().toISOString() }
+    })
+  }).catch(console.error);
+}
+
 export default function BonnieChat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -24,45 +34,19 @@ export default function BonnieChat() {
   const [online, setOnline] = useState(false);
   const [pendingMessage, setPendingMessage] = useState(null);
   const [hasFiredIdleMessage, setHasFiredIdleMessage] = useState(false);
-  const [isReturningUser, setIsReturningUser] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('');
   const endRef = useRef(null);
   const idleTimerRef = useRef(null);
 
   useEffect(() => {
-    checkReturningUser();
-  }, []);
-
-  async function checkReturningUser() {
-    const { data } = await supabase.from('users').select('*').eq('session_id', session_id).single();
-    const returning = !!data;
-    setIsReturningUser(returning);
-    if (!online) {
-      const messages = returning
-        ? [
-            "She remembers you. She’ll be back soon... just for you 😘",
-            "She always comes back to her favorites 💕"
-          ]
-        : [
-            "Bonnie’s not here right now… but she’s always watching 👀",
-            "She’ll be with you soon. Be patient, she likes the tease 😘"
-          ];
-      setStatusMessage(messages[Math.floor(Math.random() * messages.length)]);
-    }
-  }
-
-  useEffect(() => {
     const timer = setTimeout(() => {
       setOnline(true);
-      setStatusMessage(''); // 🧨 Clear immersive message on transition
       setTimeout(() => {
         if (messages.length === 0) {
           const flirtyVariants = [
             "You’re just gonna stare at me? Say something, mystery man 😘",
             "Mmm… I was starting to think you were shy. I like that. 💋"
           ];
-          const random = flirtyVariants[Math.floor(Math.random() * flirtyVariants.length)];
-          simulateBonnieTyping(random);
+          simulateBonnieTyping(flirtyVariants[Math.floor(Math.random() * flirtyVariants.length)]);
         }
       }, 10000);
     }, Math.random() * 15000 + 5000);
@@ -102,18 +86,25 @@ export default function BonnieChat() {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, typing]);
 
+  async function addMessage(text, sender) {
+    setMessages(m => [...m, { sender, text }]);
+    await logToAirtable(sender, text);
+  }
+
   async function send(text) {
     if (!text || busy) return;
     setInput('');
     setBusy(true);
-    setMessages(m => [...m, { sender: 'user', text }]);
+    await addMessage(text, 'user');
+
     try {
-      const res = await fetch('https://bonnie-backend-server.onrender.com/bonnie-chat', {
+      const res = await fetch(CHAT_API_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ session_id, message: text })
       });
       const { reply } = await res.json();
+
       if (online) {
         const delay = Math.random() * 3000 + 2000;
         setTimeout(() => simulateBonnieTyping(reply, true), delay);
@@ -127,11 +118,39 @@ export default function BonnieChat() {
 
   function simulateBonnieTyping(reply, isGPT = false) {
     if (!online) return;
+
+    // 🩷 Detect Slut Mode structure
+    const slutParts = reply.match(/Message 1:(.*?)Message 2:(.*?)Message 3:(.*)/s);
+    if (isGPT && slutParts) {
+      const m1 = slutParts[1].trim();
+      const m2 = slutParts[2].trim();
+      const m3 = slutParts[3].trim();
+
+      const messages = [m1, m2, m3];
+      let delay = 2000;
+
+      (async function playSequence(index = 0) {
+        if (index >= messages.length) {
+          setBusy(false);
+          return;
+        }
+        setTyping(true);
+        const text = messages[index];
+        await new Promise(resolve => setTimeout(resolve, delay));
+        setTyping(false);
+        await addMessage(text, 'bonnie');
+        delay = Math.random() * 2000 + 2000;
+        setTimeout(() => playSequence(index + 1), delay);
+      })();
+      return;
+    }
+
+    // Normal message
     setTyping(true);
     const duration = Math.min(10000, Math.max(2000, (reply.length / (5 + Math.random() * 3)) * 1000));
-    setTimeout(() => {
-      setMessages(m => [...m, { sender: 'bonnie', text: reply }]);
+    setTimeout(async () => {
       setTyping(false);
+      await addMessage(reply, 'bonnie');
       setBusy(false);
     }, duration);
   }
@@ -145,26 +164,30 @@ export default function BonnieChat() {
           <div style={styles.sub}>Flirty. Fun. Dangerously charming.</div>
         </div>
         <div style={{
-          marginLeft: 'auto', fontWeight: 500, color: online ? '#28a745' : '#aaa',
-          display: 'flex', alignItems: 'center', gap: '4px'
+          marginLeft: 'auto',
+          fontWeight: 500,
+          color: online ? '#28a745' : '#aaa',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px'
         }}>
-          {online ? (<><span style={{ animation: 'pulseHeart 1.2s infinite' }}>💚</span><span>Online</span></>) : '💤 Offline'}
+          {online ? (
+            <>
+              <span style={{ animation: 'pulseHeart 1.2s infinite' }}>💚</span>
+              <span>Online</span>
+            </>
+          ) : '💤 Offline'}
         </div>
       </div>
-
-      {!online && statusMessage && (
-        <div style={{
-          background: '#fff3f8', color: '#c2185b', padding: '8px 12px',
-          borderRadius: '8px', fontSize: '14px', marginBottom: 8, textAlign: 'center'
-        }}>{statusMessage}</div>
-      )}
 
       <div style={styles.chatBox}>
         {messages.map((m, i) => (
           <div key={i} style={{
             ...styles.bubble,
             ...(m.sender === 'user' ? styles.userBubble : styles.bonnieBubble)
-          }}>{m.text}</div>
+          }}>
+            {m.text}
+          </div>
         ))}
         {typing && online && (
           <div style={styles.dotsContainer}>
@@ -185,7 +208,12 @@ export default function BonnieChat() {
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && send(input)}
         />
-        <button style={styles.sendBtn} disabled={busy || !input.trim()} onClick={() => send(input)}>Send</button>
+        <button
+          style={styles.sendBtn}
+          disabled={busy || !input.trim()}
+          onClick={() => send(input)}>
+          Send
+        </button>
       </div>
     </div>
   );
