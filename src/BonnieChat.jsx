@@ -1,4 +1,4 @@
-// 💬 BonnieChat.jsx — Slut Mode v1.2.1: First-Time Tease Fix
+// 💬 BonnieChat.jsx — Slut Mode v1.2.2: Debugging + First-Time Tease Fix
 import React, { useEffect, useRef, useState } from 'react';
 
 const AIRTABLE_ENDPOINT = 'https://api.airtable.com/v0/appxKl5q1IUiIiMu7/bonnie_logs';
@@ -46,15 +46,22 @@ export default function BonnieChat() {
   ];
 
   useEffect(() => {
-    if (!localStorage.getItem('bonnie_first_time')) {
+    const isFirstTime = !localStorage.getItem('bonnie_first_time');
+    if (isFirstTime) {
+      console.log("🆕 First-time user detected — showing tease");
       simulateBonnieTyping("Hold on… Bonnie’s just slipping into something more comfortable 😘");
       localStorage.setItem('bonnie_first_time', 'true');
+      console.log("👗 Tease triggered");
+    } else {
+      console.log("🔁 Returning user — skipping tease");
     }
 
     const timer = setTimeout(() => {
       setOnline(true);
+      console.log("✅ Bonnie is now online");
       if (messages.length === 0) {
         const opener = randomFlirtyOpeners[Math.floor(Math.random() * randomFlirtyOpeners.length)];
+        console.log("💋 Random opener:", opener);
         simulateBonnieTyping(opener);
       }
     }, Math.random() * 15000 + 5000);
@@ -163,12 +170,14 @@ export default function BonnieChat() {
 
   return (
     <div style={styles.container}>
-      {/* [UI unchanged] */}
+      {/* UI rendering — unchanged */}
     </div>
   );
 }
 
-const styles = { /* [unchanged styles] */ };
+const styles = {
+  // your existing styles unchanged
+};
 
 const style = document.createElement('style');
 style.textContent = `
