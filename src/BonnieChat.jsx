@@ -1,4 +1,4 @@
-// 💬 BonnieChat.jsx — Slut Mode v1.1 + Flirty Icebreaker Injection
+// 💬 BonnieChat.jsx — Slut Mode v1.2 + Loading Tease Enhancement
 import React, { useEffect, useRef, useState } from 'react';
 
 const AIRTABLE_ENDPOINT = 'https://api.airtable.com/v0/appxKl5q1IUiIiMu7/bonnie_logs';
@@ -46,9 +46,12 @@ export default function BonnieChat() {
   ];
 
   useEffect(() => {
+    // Tease immediately
+    simulateBonnieTyping("Hold on… Bonnie’s just slipping into something more comfortable 😘");
+
+    // Then bring her online
     const timer = setTimeout(() => {
       setOnline(true);
-      // 💋 Fire opener immediately (instead of waiting 10s idle)
       if (messages.length === 0) {
         const opener = randomFlirtyOpeners[Math.floor(Math.random() * randomFlirtyOpeners.length)];
         simulateBonnieTyping(opener);
