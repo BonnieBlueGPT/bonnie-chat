@@ -1,4 +1,4 @@
-// 💬 BonnieChat.jsx — Slut Mode v1.1: Safe Reply Fix + First-Time Tease
+// 💬 BonnieChat.jsx — Supabase Logging Fix v1.3
 import React, { useEffect, useRef, useState } from 'react';
 
 const CHAT_API_ENDPOINT = 'https://bonnie-backend-server.onrender.com/bonnie-chat';
@@ -31,12 +31,6 @@ export default function BonnieChat() {
   ];
 
   useEffect(() => {
-    const isFirstTime = !localStorage.getItem('bonnie_first_time');
-    if (isFirstTime) {
-      simulateBonnieTyping("Hold on… Bonnie’s just slipping into something more comfortable 😘");
-      localStorage.setItem('bonnie_first_time', 'true');
-    }
-
     const timer = setTimeout(() => {
       setOnline(true);
       if (messages.length === 0) {
@@ -48,29 +42,31 @@ export default function BonnieChat() {
   }, []);
 
   useEffect(() => {
-    if (online && pendingMessage) {
-      const delay = Math.random() * 3000 + 2000;
-      setTimeout(() => {
-        simulateBonnieTyping(pendingMessage.text, pendingMessage.isGPT);
-        setPendingMessage(null);
-      }, delay);
-    }
-
-    idleTimerRef.current = setTimeout(() => {
-      if (messages.length === 0 && !hasFiredIdleMessage) {
-        const idleFlirty = [
-          "Still deciding what to say? 😘",
-          "Don’t leave me hanging…",
-          "You can talk to me, you know 💋",
-          "Don’t make me beg for your attention t make me beg for your attention \u wink"
-        ];
-        const idleDelay = Math.random() * 3000 + 2000;
+    if (online) {
+      if (pendingMessage) {
+        const delay = Math.random() * 3000 + 2000;
         setTimeout(() => {
-          simulateBonnieTyping(idleFlirty[Math.floor(Math.random() * idleFlirty.length)]);
-          setHasFiredIdleMessage(true);
-        }, idleDelay);
+          simulateBonnieTyping(pendingMessage.text, pendingMessage.isGPT);
+          setPendingMessage(null);
+        }, delay);
       }
-    }, 30000);
+
+      idleTimerRef.current = setTimeout(() => {
+        if (messages.length === 0 && !hasFiredIdleMessage) {
+          const idleFlirty = [
+            "Still deciding what to say? 😘",
+            "Don’t leave me hanging…",
+            "You can talk to me, you know 💋",
+            "Don’t make me beg for your attention 😉"
+          ];
+          const idleDelay = Math.random() * 3000 + 2000;
+          setTimeout(() => {
+            simulateBonnieTyping(idleFlirty[Math.floor(Math.random() * idleFlirty.length)]);
+            setHasFiredIdleMessage(true);
+          }, idleDelay);
+        }
+      }, 30000);
+    }
     return () => clearTimeout(idleTimerRef.current);
   }, [online, pendingMessage]);
 
@@ -78,7 +74,7 @@ export default function BonnieChat() {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, typing]);
 
-  function addMessage(text, sender) {
+  async function addMessage(text, sender) {
     setMessages(m => [...m, { sender, text }]);
   }
 
@@ -86,7 +82,7 @@ export default function BonnieChat() {
     if (!text || busy) return;
     setInput('');
     setBusy(true);
-    addMessage(text, 'user');
+    await addMessage(text, 'user');
 
     try {
       const res = await fetch(CHAT_API_ENDPOINT, {
@@ -108,25 +104,27 @@ export default function BonnieChat() {
   }
 
   function simulateBonnieTyping(reply, isGPT = false) {
-    if (!reply || typeof reply !== 'string') {
-      addMessage("Oops… Bonnie glitched a bit 💔 Try again?");
-      setBusy(false);
-      return;
-    }
-
     if (!online) return;
 
     const slutParts = reply.match(/Message 1:(.*?)Message 2:(.*?)Message 3:(.*)/s);
     if (isGPT && slutParts) {
-      const [m1, m2, m3] = [slutParts[1], slutParts[2], slutParts[3]].map(p => p.trim());
-      const parts = [m1, m2, m3];
+      const m1 = slutParts[1].trim();
+      const m2 = slutParts[2].trim();
+      const m3 = slutParts[3].trim();
+
+      const messages = [m1, m2, m3];
       let delay = 2000;
+
       (async function playSequence(index = 0) {
-        if (index >= parts.length) return setBusy(false);
+        if (index >= messages.length) {
+          setBusy(false);
+          return;
+        }
         setTyping(true);
-        await new Promise(res => setTimeout(res, delay));
+        const text = messages[index];
+        await new Promise(resolve => setTimeout(resolve, delay));
         setTyping(false);
-        addMessage(parts[index], 'bonnie');
+        await addMessage(text, 'bonnie');
         delay = Math.random() * 2000 + 2000;
         setTimeout(() => playSequence(index + 1), delay);
       })();
@@ -135,9 +133,9 @@ export default function BonnieChat() {
 
     setTyping(true);
     const duration = Math.min(10000, Math.max(2000, (reply.length / (5 + Math.random() * 3)) * 1000));
-    setTimeout(() => {
+    setTimeout(async () => {
       setTyping(false);
-      addMessage(reply, 'bonnie');
+      await addMessage(reply, 'bonnie');
       setBusy(false);
     }, duration);
   }
@@ -145,11 +143,18 @@ export default function BonnieChat() {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <img src="https://static.wixstatic.com/media/6f5121_df2de6be1e444b0cb2df5d4bd9d49b21~mv2.png" style={styles.avatar} />
+        <img src="https://static.wixstatic.com/media/6f5121_df2de6be1e444b0cb2df5d4bd9d49b21~mv2.png" style={styles.avatar} alt="Bonnie" />
         <div>
           <div style={styles.name}>Bonnie Blue</div>
           <div style={styles.sub}>Flirty. Fun. Dangerously charming.</div>
-          <a href="https://x.com/trainmybonnie" target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#e91e63', textDecoration: 'none' }}>💋 Follow me on X</a>
+          <a
+            href="https://x.com/trainmybonnie"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ fontSize: 12, color: '#e91e63', textDecoration: 'none' }}
+          >
+            💋 Follow me on X
+          </a>
         </div>
         <div style={{
           marginLeft: 'auto',
@@ -159,7 +164,12 @@ export default function BonnieChat() {
           alignItems: 'center',
           gap: '4px'
         }}>
-          {online ? <><span style={{ animation: 'pulseHeart 1.2s infinite' }}>💚</span><span>Online</span></> : '💤 Offline'}
+          {online ? (
+            <>
+              <span style={{ animation: 'pulseHeart 1.2s infinite' }}>💚</span>
+              <span>Online</span>
+            </>
+          ) : '💤 Offline'}
         </div>
       </div>
 
