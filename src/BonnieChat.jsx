@@ -1,4 +1,4 @@
-// 💬 BonnieChat.jsx — Tease Hook v1.1: New User First-Line
+// 💬 BonnieChat.jsx — Slut Mode v1.1: Safe Reply Fix + First-Time Tease
 import React, { useEffect, useRef, useState } from 'react';
 
 const CHAT_API_ENDPOINT = 'https://bonnie-backend-server.onrender.com/bonnie-chat';
@@ -62,7 +62,7 @@ export default function BonnieChat() {
           "Still deciding what to say? 😘",
           "Don’t leave me hanging…",
           "You can talk to me, you know 💋",
-          "Don’t make me beg for your attention 😉"
+          "Don’t make me beg for your attention t make me beg for your attention \u wink"
         ];
         const idleDelay = Math.random() * 3000 + 2000;
         setTimeout(() => {
@@ -108,6 +108,12 @@ export default function BonnieChat() {
   }
 
   function simulateBonnieTyping(reply, isGPT = false) {
+    if (!reply || typeof reply !== 'string') {
+      addMessage("Oops… Bonnie glitched a bit 💔 Try again?");
+      setBusy(false);
+      return;
+    }
+
     if (!online) return;
 
     const slutParts = reply.match(/Message 1:(.*?)Message 2:(.*?)Message 3:(.*)/s);
