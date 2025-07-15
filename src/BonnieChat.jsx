@@ -1,4 +1,4 @@
-// 💬 BonnieChat.jsx — Supabase Logging Fix v1.3
+// 💬 BonnieChat.jsx — Instant Spark Tease + Session Detection
 import React, { useEffect, useRef, useState } from 'react';
 
 const CHAT_API_ENDPOINT = 'https://bonnie-backend-server.onrender.com/bonnie-chat';
@@ -7,6 +7,7 @@ const session_id = (() => {
   if (!id) {
     id = 'guest_' + Math.random().toString(36).slice(2);
     localStorage.setItem('bonnie_session', id);
+    window.__BONNIE_FIRST_VISIT = true; // Custom flag for first-time logic
   }
   return id;
 })();
@@ -31,6 +32,10 @@ export default function BonnieChat() {
   ];
 
   useEffect(() => {
+    if (window.__BONNIE_FIRST_VISIT) {
+      setTimeout(() => simulateBonnieTyping("Hold on… Bonnie’s just slipping into something more comfortable 😘"), 3000);
+    }
+
     const timer = setTimeout(() => {
       setOnline(true);
       if (messages.length === 0) {
@@ -38,6 +43,7 @@ export default function BonnieChat() {
         simulateBonnieTyping(opener);
       }
     }, Math.random() * 15000 + 5000);
+
     return () => clearTimeout(timer);
   }, []);
 
