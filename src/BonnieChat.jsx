@@ -1,4 +1,4 @@
-// 💬 BonnieChat.jsx — Supabase Fix v1.2.3: Remove Airtable Logging
+// 💬 BonnieChat.jsx — Supabase Chat Fix v1.2.4: UI Restored + Airtable Removed
 import React, { useEffect, useRef, useState } from 'react';
 
 const CHAT_API_ENDPOINT = 'https://bonnie-backend-server.onrender.com/bonnie-chat';
@@ -33,16 +33,12 @@ export default function BonnieChat() {
   useEffect(() => {
     const isFirstTime = !localStorage.getItem('bonnie_first_time');
     if (isFirstTime) {
-      console.log("🆕 First-time user detected — showing tease");
       simulateBonnieTyping("Hold on… Bonnie’s just slipping into something more comfortable 😘");
       localStorage.setItem('bonnie_first_time', 'true');
-    } else {
-      console.log("🔁 Returning user — skipping tease");
     }
 
     const timer = setTimeout(() => {
       setOnline(true);
-      console.log("✅ Bonnie is now online");
       if (messages.length === 0) {
         const opener = randomFlirtyOpeners[Math.floor(Math.random() * randomFlirtyOpeners.length)];
         simulateBonnieTyping(opener);
@@ -52,31 +48,29 @@ export default function BonnieChat() {
   }, []);
 
   useEffect(() => {
-    if (online) {
-      if (pendingMessage) {
-        const delay = Math.random() * 3000 + 2000;
-        setTimeout(() => {
-          simulateBonnieTyping(pendingMessage.text, pendingMessage.isGPT);
-          setPendingMessage(null);
-        }, delay);
-      }
-
-      idleTimerRef.current = setTimeout(() => {
-        if (messages.length === 0 && !hasFiredIdleMessage) {
-          const idleFlirty = [
-            "Still deciding what to say? 😘",
-            "Don’t leave me hanging…",
-            "You can talk to me, you know 💋",
-            "Don’t make me beg for your attention 😉"
-          ];
-          const idleDelay = Math.random() * 3000 + 2000;
-          setTimeout(() => {
-            simulateBonnieTyping(idleFlirty[Math.floor(Math.random() * idleFlirty.length)]);
-            setHasFiredIdleMessage(true);
-          }, idleDelay);
-        }
-      }, 30000);
+    if (online && pendingMessage) {
+      const delay = Math.random() * 3000 + 2000;
+      setTimeout(() => {
+        simulateBonnieTyping(pendingMessage.text, pendingMessage.isGPT);
+        setPendingMessage(null);
+      }, delay);
     }
+
+    idleTimerRef.current = setTimeout(() => {
+      if (messages.length === 0 && !hasFiredIdleMessage) {
+        const idleFlirty = [
+          "Still deciding what to say? 😘",
+          "Don’t leave me hanging…",
+          "You can talk to me, you know 💋",
+          "Don’t make me beg for your attention 😉"
+        ];
+        const idleDelay = Math.random() * 3000 + 2000;
+        setTimeout(() => {
+          simulateBonnieTyping(idleFlirty[Math.floor(Math.random() * idleFlirty.length)]);
+          setHasFiredIdleMessage(true);
+        }, idleDelay);
+      }
+    }, 30000);
     return () => clearTimeout(idleTimerRef.current);
   }, [online, pendingMessage]);
 
@@ -118,23 +112,15 @@ export default function BonnieChat() {
 
     const slutParts = reply.match(/Message 1:(.*?)Message 2:(.*?)Message 3:(.*)/s);
     if (isGPT && slutParts) {
-      const m1 = slutParts[1].trim();
-      const m2 = slutParts[2].trim();
-      const m3 = slutParts[3].trim();
-
-      const messages = [m1, m2, m3];
+      const [m1, m2, m3] = [slutParts[1], slutParts[2], slutParts[3]].map(p => p.trim());
+      const parts = [m1, m2, m3];
       let delay = 2000;
-
       (async function playSequence(index = 0) {
-        if (index >= messages.length) {
-          setBusy(false);
-          return;
-        }
+        if (index >= parts.length) return setBusy(false);
         setTyping(true);
-        const text = messages[index];
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise(res => setTimeout(res, delay));
         setTyping(false);
-        addMessage(text, 'bonnie');
+        addMessage(parts[index], 'bonnie');
         delay = Math.random() * 2000 + 2000;
         setTimeout(() => playSequence(index + 1), delay);
       })();
@@ -152,13 +138,99 @@ export default function BonnieChat() {
 
   return (
     <div style={styles.container}>
-      {/* Insert your existing UI layout (unchanged) */}
+      <div style={styles.header}>
+        <img src="https://static.wixstatic.com/media/6f5121_df2de6be1e444b0cb2df5d4bd9d49b21~mv2.png" style={styles.avatar} />
+        <div>
+          <div style={styles.name}>Bonnie Blue</div>
+          <div style={styles.sub}>Flirty. Fun. Dangerously charming.</div>
+          <a href="https://x.com/trainmybonnie" target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#e91e63', textDecoration: 'none' }}>💋 Follow me on X</a>
+        </div>
+        <div style={{
+          marginLeft: 'auto',
+          fontWeight: 500,
+          color: online ? '#28a745' : '#aaa',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px'
+        }}>
+          {online ? <><span style={{ animation: 'pulseHeart 1.2s infinite' }}>💚</span><span>Online</span></> : '💤 Offline'}
+        </div>
+      </div>
+
+      <div style={styles.chatBox}>
+        {messages.map((m, i) => (
+          <div key={i} style={{
+            ...styles.bubble,
+            ...(m.sender === 'user' ? styles.userBubble : styles.bonnieBubble)
+          }}>
+            {m.text}
+          </div>
+        ))}
+        {typing && online && (
+          <div style={styles.dotsContainer}>
+            <div style={{ ...styles.dot, animationDelay: '0s' }} />
+            <div style={{ ...styles.dot, animationDelay: '0.2s' }} />
+            <div style={{ ...styles.dot, animationDelay: '0.4s' }} />
+          </div>
+        )}
+        <div ref={endRef} />
+      </div>
+
+      <div style={styles.inputContainer}>
+        <input
+          style={styles.input}
+          value={input}
+          placeholder="Type something…"
+          disabled={busy}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && send(input)}
+        />
+        <button
+          style={styles.sendBtn}
+          disabled={busy || !input.trim()}
+          onClick={() => send(input)}>
+          Send
+        </button>
+      </div>
     </div>
   );
 }
 
 const styles = {
-  container: { fontFamily: 'Segoe UI, sans-serif', maxWidth: 480, margin: 'auto', padding: 16 }
+  container: { fontFamily: 'Segoe UI, sans-serif', maxWidth: 480, margin: 'auto', padding: 16 },
+  header: { display: 'flex', alignItems: 'center', marginBottom: 12 },
+  avatar: { width: 56, height: 56, borderRadius: 28, marginRight: 12, border: '2px solid #e91e63' },
+  name: { color: '#e91e63', fontSize: 20, fontWeight: 600 },
+  sub: { color: '#555', fontSize: 14 },
+  chatBox: {
+    background: '#fff', borderRadius: 12, padding: 12, height: 400,
+    overflowY: 'auto', boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+  },
+  bubble: {
+    maxWidth: '75%', padding: 8, borderRadius: 12, margin: '6px 0',
+    fontSize: 14, lineHeight: 1.4
+  },
+  userBubble: {
+    background: 'linear-gradient(135deg,#ff83a0,#e91e63)', color: '#fff',
+    alignSelf: 'flex-end', marginLeft: 'auto'
+  },
+  bonnieBubble: {
+    background: '#fff0f6', border: '1px solid #ffe6f0',
+    color: '#333', alignSelf: 'flex-start'
+  },
+  dotsContainer: { display: 'flex', gap: 4, margin: '8px 0' },
+  dot: {
+    width: 8, height: 8, borderRadius: 4, background: '#e91e63',
+    animation: 'bounce 1s infinite ease-in-out'
+  },
+  inputContainer: { display: 'flex', gap: 8, marginTop: 12 },
+  input: {
+    flex: 1, padding: 10, borderRadius: 20, border: '1px solid #ccc', fontSize: 14
+  },
+  sendBtn: {
+    padding: '0 16px', borderRadius: 20, background: '#e91e63', color: '#fff',
+    border: 'none', fontSize: 14, cursor: 'pointer'
+  }
 };
 
 const style = document.createElement('style');
