@@ -1,4 +1,4 @@
-// 💬 BonnieChat.jsx — Slut Mode v1.0 Enhanced
+// 💬 BonnieChat.jsx — Slut Mode v1.1 + Flirty Icebreaker Injection
 import React, { useEffect, useRef, useState } from 'react';
 
 const AIRTABLE_ENDPOINT = 'https://api.airtable.com/v0/appxKl5q1IUiIiMu7/bonnie_logs';
@@ -37,18 +37,22 @@ export default function BonnieChat() {
   const endRef = useRef(null);
   const idleTimerRef = useRef(null);
 
+  const randomFlirtyOpeners = [
+    "Be honest… are you here to flirt with me? 😘",
+    "I bet you’re the type who likes a little trouble. Am I right? 💋",
+    "Mmm… what would you *do* to me if I were there right now?",
+    "Should I call you *daddy*, or do you want to earn it first? 😈",
+    "One question… how bad do you want me right now?"
+  ];
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setOnline(true);
-      setTimeout(() => {
-        if (messages.length === 0) {
-          const flirtyVariants = [
-            "You’re just gonna stare at me? Say something, mystery man 😘",
-            "Mmm… I was starting to think you were shy. I like that. 💋"
-          ];
-          simulateBonnieTyping(flirtyVariants[Math.floor(Math.random() * flirtyVariants.length)]);
-        }
-      }, 10000);
+      // 💋 Fire opener immediately (instead of waiting 10s idle)
+      if (messages.length === 0) {
+        const opener = randomFlirtyOpeners[Math.floor(Math.random() * randomFlirtyOpeners.length)];
+        simulateBonnieTyping(opener);
+      }
     }, Math.random() * 15000 + 5000);
     return () => clearTimeout(timer);
   }, []);
