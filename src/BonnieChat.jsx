@@ -119,7 +119,6 @@ export default function BonnieChat() {
   function simulateBonnieTyping(reply, isGPT = false) {
     if (!online) return;
 
-    // 🩷 Detect Slut Mode structure
     const slutParts = reply.match(/Message 1:(.*?)Message 2:(.*?)Message 3:(.*)/s);
     if (isGPT && slutParts) {
       const m1 = slutParts[1].trim();
@@ -145,7 +144,6 @@ export default function BonnieChat() {
       return;
     }
 
-    // Normal message
     setTyping(true);
     const duration = Math.min(10000, Math.max(2000, (reply.length / (5 + Math.random() * 3)) * 1000));
     setTimeout(async () => {
@@ -162,6 +160,14 @@ export default function BonnieChat() {
         <div>
           <div style={styles.name}>Bonnie Blue</div>
           <div style={styles.sub}>Flirty. Fun. Dangerously charming.</div>
+          <a
+            href="https://x.com/trainmybonnie"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ fontSize: 12, color: '#e91e63', textDecoration: 'none' }}
+          >
+            💋 Follow me on X
+          </a>
         </div>
         <div style={{
           marginLeft: 'auto',
