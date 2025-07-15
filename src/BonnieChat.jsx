@@ -1,4 +1,4 @@
-// 💬 BonnieChat.jsx — Supabase Chat Fix v1.2.4: UI Restored + Airtable Removed
+// 💬 BonnieChat.jsx — Tease Hook v1.1: New User First-Line
 import React, { useEffect, useRef, useState } from 'react';
 
 const CHAT_API_ENDPOINT = 'https://bonnie-backend-server.onrender.com/bonnie-chat';
