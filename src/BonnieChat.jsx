@@ -1,4 +1,4 @@
-// 💬 BonnieChat.jsx — v15.3.1 Fullscreen Fix (No Scroll Cutoff)
+// 💬 BonnieChat.jsx — v15.4 Typing Rhythm Upgrade (5 chars/sec, no cap)
 import React, { useEffect, useRef, useState } from 'react';
 
 const CHAT_API_ENDPOINT = 'https://bonnie-backend-server.onrender.com/bonnie-chat';
@@ -101,26 +101,42 @@ export default function BonnieChat() {
     }
   }
 
-  function simulateBonnieTyping(reply) {
+  function simulateBonnieTyping(replyArray) {
     if (!online) return;
-    const parts = reply.split('<EOM>').map(p => p.trim()).filter(Boolean);
-    let delay = 1500;
+
+    const parts = Array.isArray(replyArray)
+      ? replyArray
+      : replyArray.split('<EOM>').map(p => p.trim()).filter(Boolean);
+
     (async function play(index = 0) {
       if (index >= parts.length) {
         setBusy(false);
         return;
       }
+
+      // 1. Thinking time before showing typing dots
+      await new Promise(res => setTimeout(res, 1200));
+
+      // 2. Show typing dots
       setTyping(true);
-      await new Promise(res => setTimeout(res, delay));
+
+      // 3. Typing delay = 200ms per character (5 chars/sec), no cap
+      const typingTime = parts[index].length * 200;
+      await new Promise(res => setTimeout(res, typingTime));
+
+      // 4. Hide typing and display message
       setTyping(false);
       await addMessage(parts[index], 'bonnie');
-      delay = Math.random() * 2000 + 2000;
-      setTimeout(() => play(index + 1), delay);
+
+      // 5. Wait 1–3s before next message
+      const nextDelay = Math.random() * 2000 + 1000;
+      setTimeout(() => play(index + 1), nextDelay);
     })();
   }
 
   return (
     <div style={{ fontFamily: 'Segoe UI', height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* header */}
       <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', padding: 8 }}>
         <img src="https://static.wixstatic.com/media/6f5121_df2de6be1e444b0cb2df5d4bd9d49b21~mv2.png" style={{ width: 56, height: 56, borderRadius: 28, marginRight: 12, border: '2px solid #e91e63' }} alt="Bonnie" />
         <div>
@@ -133,6 +149,7 @@ export default function BonnieChat() {
         </div>
       </div>
 
+      {/* chat box */}
       <div style={{ flex: 1, overflowY: 'auto', padding: 12, display: 'flex', flexDirection: 'column' }}>
         {messages.map((m, i) => (
           <div key={i} style={{
@@ -152,6 +169,7 @@ export default function BonnieChat() {
         <div ref={endRef} />
       </div>
 
+      {/* input */}
       <div style={{ flexShrink: 0, display: 'flex', gap: 8, padding: 8, borderTop: '1px solid #eee' }}>
         <input
           style={{ flex: 1, padding: 12, borderRadius: 30, border: '1px solid #ccc', fontSize: 16 }}
