@@ -121,7 +121,7 @@ export default function BonnieChat() {
       setTyping(true);
 
       // 3. Typing delay = 200ms per character (5 chars/sec), no cap
-      const typingTime = parts[index].length * 200;
+      const typingTime = parts[index].length * 80;
       await new Promise(res => setTimeout(res, typingTime));
 
       // 4. Hide typing and display message
