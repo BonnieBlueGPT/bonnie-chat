@@ -1,4 +1,4 @@
-// 💬 BonnieChat.jsx — v15.2 EOM Split + Visual Restoration
+// 💬 BonnieChat.jsx — v15.3 Mobile Fullscreen Upgrade
 import React, { useEffect, useRef, useState } from 'react';
 
 const CHAT_API_ENDPOINT = 'https://bonnie-backend-server.onrender.com/bonnie-chat';
@@ -120,8 +120,8 @@ export default function BonnieChat() {
   }
 
   return (
-    <div style={{ fontFamily: 'Segoe UI', maxWidth: 480, margin: 'auto', padding: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+    <div style={{ fontFamily: 'Segoe UI', height: '100vh', display: 'flex', flexDirection: 'column', padding: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', paddingBottom: 8 }}>
         <img src="https://static.wixstatic.com/media/6f5121_df2de6be1e444b0cb2df5d4bd9d49b21~mv2.png" style={{ width: 56, height: 56, borderRadius: 28, marginRight: 12, border: '2px solid #e91e63' }} alt="Bonnie" />
         <div>
           <div style={{ color: '#e91e63', fontSize: 20, fontWeight: 600 }}>Bonnie Blue</div>
@@ -133,7 +133,7 @@ export default function BonnieChat() {
         </div>
       </div>
 
-      <div style={{ background: '#fff', borderRadius: 12, padding: 12, height: 400, overflowY: 'auto', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
+      <div style={{ flex: 1, background: '#fff', borderRadius: 12, padding: 12, overflowY: 'auto', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
         {messages.map((m, i) => (
           <div key={i} style={{
             maxWidth: '75%', padding: 8, borderRadius: 12, margin: '6px 0', fontSize: 14, lineHeight: 1.4,
@@ -152,9 +152,9 @@ export default function BonnieChat() {
         <div ref={endRef} />
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+      <div style={{ display: 'flex', gap: 8, marginTop: 8, padding: 8, borderTop: '1px solid #eee' }}>
         <input
-          style={{ flex: 1, padding: 10, borderRadius: 20, border: '1px solid #ccc', fontSize: 14 }}
+          style={{ flex: 1, padding: 12, borderRadius: 30, border: '1px solid #ccc', fontSize: 16 }}
           value={input}
           placeholder="Type something…"
           disabled={busy}
@@ -162,7 +162,7 @@ export default function BonnieChat() {
           onKeyDown={e => e.key === 'Enter' && send(input)}
         />
         <button
-          style={{ padding: '0 16px', borderRadius: 20, background: '#e91e63', color: '#fff', border: 'none', fontSize: 14, cursor: 'pointer' }}
+          style={{ padding: '0 16px', borderRadius: 30, background: '#e91e63', color: '#fff', border: 'none', fontSize: 16, cursor: 'pointer' }}
           disabled={busy || !input.trim()}
           onClick={() => send(input)}>
           Send
