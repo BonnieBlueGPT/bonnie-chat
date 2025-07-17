@@ -101,8 +101,8 @@ export default function BonnieChat() {
       if (index % 2 === 0) {
         return { text: chunk.trim(), pause: 1200, speed: 'normal' };
       } else {
-        const pause = /pause=(\\d+)/.exec(chunk)?.[1];
-        const speed = /speed=(\\w+)/.exec(chunk)?.[1];
+const pause = /pause=(\d+)/.exec(chunk)?.[1];
+const speed = /speed=(\w+)/.exec(chunk)?.[1];
         return { meta: true, pause: pause ? parseInt(pause) : 1000, speed: speed || 'normal' };
       }
     });
